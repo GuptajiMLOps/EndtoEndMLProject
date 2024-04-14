@@ -2,18 +2,13 @@ import os
 import sys
 from dataclasses import dataclass
 
-from catboost import CatBoostRegressor
 from sklearn.ensemble import(
-    AdaBoostClassifier,
-    GradientBoostingRegressor,
     RandomForestRegressor
 )
 
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
-from xgboost import XGBRegressor
 
 from src.exception import CustomException
 from src.logger import logging
@@ -43,16 +38,21 @@ class ModelTrainer:
             models={
                 "Random Forest": RandomForestRegressor(),
                 "Decision Tree": DecisionTreeRegressor(),
-                "Gradient Boosting": GradientBoostingRegressor(),
-                "Linear Regression": LinearRegression(),
-                "K-Nieghbors Classifier": KNeighborsRegressor(),
-                "XGBClassifier":XGBRegressor(),
-                "CatBoosting Classifier": CatBoostRegressor(verbose=False),
-                "AdaBoost Classifier": AdaBoostClassifier()
+                "Linear Regression": LinearRegression()
+            }
+
+            params={
+                "Decision Tree": {
+                    'criterion':['squared_error', 'friedman_mse', 'absolute_error', 'poisson']
+                },
+                "Random Forest":{
+                    'n_estimators': [8,16,32,64,128,256]
+                },
+                "Linear Regression":{}   
             }
 
             model_report:dict=evaluate_models(X_train=X_train,y_train=y_train,X_test=X_test,
-                                             y_test=y_test,models=models)
+                                             y_test=y_test,models=models,params=params)
             
             best_model_score=max(sorted(model_report.values()))
 
@@ -75,8 +75,8 @@ class ModelTrainer:
             )
 
             predicted=best_model.predict(X_test)
-            r2_square = r2_score(y_test,predicted)
-            return r2_score
+            r2score = r2_score(y_test,predicted)
+            return r2score
 
         except Exception as e:
             raise CustomException(e,sys)
